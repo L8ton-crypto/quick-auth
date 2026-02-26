@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Shield, ArrowLeft, ExternalLink, Copy, Check, Code2, Zap, Users, Lock } from 'lucide-react';
 import Link from 'next/link';
-import Script from 'next/script';
 import { motion } from 'framer-motion';
 
 const DEMO_API_KEY = 'qa_demo_key_public';
@@ -44,6 +43,31 @@ export default function Demo() {
       window.removeEventListener('quickauth:register', handleRegister);
     };
   }, []);
+
+  // Inject widget script manually so it renders in the right container
+  useEffect(() => {
+    const container = document.getElementById('qa-demo-widget');
+    if (!container) return;
+
+    // Clear previous widget
+    container.innerHTML = '';
+
+    // Remove old styles
+    document.querySelectorAll('style').forEach(s => {
+      if (s.textContent?.includes('qa-widget')) s.remove();
+    });
+
+    // Create and inject script
+    const script = document.createElement('script');
+    script.src = '/widget.js';
+    script.setAttribute('data-api-key', DEMO_API_KEY);
+    script.setAttribute('data-theme', theme);
+    container.appendChild(script);
+
+    return () => {
+      container.innerHTML = '';
+    };
+  }, [theme, widgetKey]);
 
   const switchTheme = (t: 'dark' | 'light') => {
     setTheme(t);
@@ -121,15 +145,7 @@ export default function Demo() {
               animate={{ opacity: 1, scale: 1 }}
               className={`rounded-2xl p-8 ${theme === 'light' ? 'bg-zinc-100' : 'bg-zinc-900/30'} border border-zinc-800 flex items-center justify-center min-h-[320px]`}
             >
-              <div id="qa-demo-widget">
-                <Script
-                  key={widgetKey}
-                  src="/widget.js"
-                  data-api-key={DEMO_API_KEY}
-                  data-theme={theme}
-                  strategy="afterInteractive"
-                />
-              </div>
+              <div id="qa-demo-widget" />
             </motion.div>
 
             {/* Event log */}
